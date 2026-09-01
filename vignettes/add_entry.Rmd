@@ -1,0 +1,225 @@
+---
+title: "Adding a New Entry Format"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Adding a New Entry Format}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+# Introduction
+
+The `vitae` package provides several built-in entry formats such as `detailed_entries()`, `brief_entries()`, `honor_entries()`, and `skill_entries()`. However, you may need a custom entry type to display different information structures—for instance, a `plain_entries()` format to output a paragraph or short summary text block within a section.
+
+This vignette documents the key architectural changes required to add a new entry type to `vitae`, using the addition of `plain_entries()` as a reference example.
+
+---
+
+# Architecture Overview
+
+Adding a new entry format to `vitae` requires integrating components across LaTeX class definitions, R data structures, template format registries, and S3 print methods. 
+
+As outlined in `R/crisp.R`, the overall workflow involves:
+
+1. **Defining LaTeX environments and commands** in template files (`.cls` / `.tex`).
+2. **Updating `new_entry_formats()`** in `R/00_entries.R` to accept the new format option.
+3. **Registering the format generator function** in template definitions (e.g., `crisp_entries` in `R/crisp.R`).
+4. **Creating the R constructor function** (e.g., `plain_entries()` in `R/plain.R`).
+5. **Implementing S3 methods** (`tbl_sum` and `knit_print`) for the new entry class.
+6. **Exporting and registering functions** in `NAMESPACE`.
+
+---
+
+# Step-by-Step Implementation
+
+## 1. Define LaTeX Commands and Environments
+
+First, the underlying LaTeX template must define how the new entry type is styled and formatted in TeX.
+
+For the `plain` entry type in the `crisp` template (`inst/rmarkdown/templates/crisp/skeleton/crisp.cls`), the `cvtext` environment and `\cvplain` command were added:
+
+```latex
+% Define an environment for cvtext
+\newenvironment{cvtext}{%
+  \vspace{\acvSectionContentTopSkip}
+  \vspace{1.0mm}
+  \begin{center}
+    \setlength\tabcolsep{1ex}
+    \setlength{\extrarowheight}{0pt}
+    \begin{tabular*}{\textwidth}{@{} L{\textwidth} @{}}
+}{%
+    \end{tabular*}
+  \end{center}
+}
+
+% Define a display for plain text
+% Usage: \cvplain{<text>}
+\newcommand*{\cvplain}[1]{%
+  \descriptionstyle{#1} \\
+}
+```
+
+## 2. Update `new_entry_formats()` in `R/00_entries.R`
+
+The `new_entry_formats()` helper function aggregates entry generator functions for a template. It must be updated to accept the new entry format parameter (`plain = NULL`):
+
+```r
+new_entry_formats <- function(brief, detailed, honor = NULL, skill = NULL, plain = NULL) {
+  formats <- list(brief = brief, detailed = detailed)
+  if (!is.null(honor)) formats$honor <- honor
+  if (!is.null(skill)) formats$skill <- skill
+  if (!is.null(plain)) formats$plain <- plain
+  formats
+}
+```
+
+## 3. Register LaTeX Generator in Template (`R/crisp.R`)
+
+The generator function produces the actual LaTeX string using the commands defined in step 1. In `R/crisp.R`, the generator function for `plain` is passed to `new_entry_formats()`:
+
+```r
+crisp_entries <- new_entry_formats(
+  ...
+  # add a new entry with plain text, taking only one argument, the
+  # text to be displayed. This is useful for adding a short
+  # description or summary of a section.
+  plain = function(what){
+    paste(
+      c(
+        "\\begin{cvtext}",
+        glue_alt("\t\\cvplain{<<what>>}"),
+        "\\end{cvtext}"
+      ),
+      collapse = "\n"
+    )
+  },
+  ...
+)
+```
+
+As noted in the developer comments in `R/crisp.R`, generator functions are called by the S3 `knit_print.*` functions (e.g. `knit_print.vitae_plain()` calls `plain()`). If you define a new entry format, you register it with `set_entry_formats()` for the current template.
+
+## 4. Construct R Entry Function (`R/plain.R`)
+
+Create the user-facing constructor function (e.g., `plain_entries()`). This function accepts input data, evaluates expressions using `rlang`, and assigns a custom class (`vitae_plain`) inheriting from `vitae_preserve`:
+
+```r
+#' Create plain entries
+#'
+#' @param data A `data.frame` or `tibble` containing the plain text entries
+#' @param details the column name in `data` that contains the details for each entry
+#' @param .protect Logical, if TRUE (default) protects special LaTeX characters in input
+#'
+#' @return Object of class \code{vitae_plain}
+#' @export
+plain_entries <- function(data, details, .protect = TRUE) {
+  plain_exprs <- list(
+    details = enquo(details) %missing% NA_character_
+  )
+
+  out <- dplyr::as_tibble(map(plain_exprs, eval_tidy, data = data))
+  structure(out,
+    preserve = names(plain_exprs),
+    protect = .protect,
+    class = c("vitae_plain", "vitae_preserve", class(data))
+  )
+}
+```
+
+## 5. Implement S3 Methods for the Entry Class (`R/plain.R`)
+
+### Summary Method (`tbl_sum`)
+
+Provides a clean summary header when printing the entry object in tibble format:
+
+```r
+#' @importFrom tibble tbl_sum
+#' @export
+tbl_sum.vitae_plain <- function(x) {
+  x <- NextMethod()
+  c(x, "vitae type" = "plain entries")
+}
+```
+
+### Knitr Printing Method (`knit_print`)
+
+`knit_print.vitae_plain()` is called by `knitr` when rendering the document. It retrieves the registered `plain` format function from `entry_format_functions$format`, applies protection against special TeX characters if requested, and returns raw LaTeX via `knitr::asis_output()`:
+
+```r
+#' @importFrom knitr knit_print
+#' @export
+knit_print.vitae_plain <- function(x, options, ...) {
+  if(is.null(entry_format_functions$format)) {
+    warn("Plain entry formatter is not defined for this output format.")
+    return(knit_print(tibble::as_tibble(x)))
+  }
+
+  format <- entry_format_functions$format$plain
+  if (is.null(format)) {
+    warning("Plain format not supported for this template, using brief format instead")
+    format <- entry_format_functions$format$brief
+  }
+
+  x[is.na(x)] <- ""
+
+  if(!(x%@%"protect")){
+    protect_tex_input <- identity
+  }
+
+  knitr::asis_output(
+    format(
+      protect_tex_input(x$details)
+    )
+  )
+}
+```
+
+## 6. Export and Register in `NAMESPACE`
+
+Finally, export the new function and register S3 methods in `NAMESPACE`
+by running `devtools::document()` or manually adding the following
+lines to `NAMESPACE`:
+
+```R
+devtools::document()
+#export(plain_entries)
+#S3method(knit_print, vitae_plain)
+#S3method(tbl_sum, vitae_plain)
+```
+
+---
+
+# Usage Example
+
+Once implemented, users can use `plain_entries()` in their R Markdown CV document as follows:
+
+```{r eval=FALSE}
+library(vitae)
+library(tibble)
+
+tribble(
+  ~Summary,
+  "Experienced data scientist specializing in statistical modeling, machine learning, and open-source software development."
+) %>%
+  plain_entries(details = Summary)
+```
+
+---
+
+# Summary Checklist
+
+When adding another entry format in the future, follow this process:
+
+- [ ] Define TeX environments/commands in template `.cls` or `.tex` resource files.
+- [ ] Add default parameter (e.g. `plain = NULL`) to `new_entry_formats()` in `R/00_entries.R`.
+- [ ] Implement entry format function in template format definitions (e.g. `crisp_entries` in `R/crisp.R`).
+- [ ] Create `R/<entry>.R` with user constructor function returning `vitae_<entry>` class.
+- [ ] Implement `tbl_sum.vitae_<entry>` and `knit_print.vitae_<entry>` S3 methods.
+- [ ] Export function and register S3 methods in `NAMESPACE`.
