@@ -144,12 +144,18 @@ $endfor$
 
 % Allow YAML variable `spacing_after_section_title` (LaTeX length, e.g. '-1mm' or '0.5mm')
 % to adjust spacing after section titles
-$if(spacing_after_section_title)$
 \makeatletter
 \let\origsection\section
-\renewcommand{\section}[1]{\origsection{#1}\vspace{$spacing_after_section_title$}}
+\renewcommand{\section}[1]{%
+  $if(spacing_before_section_title)$%
+  \vspace{$spacing_before_section_title$}%
+  $endif$%
+  \origsection{#1}%
+  $if(spacing_after_section_title)$%
+  \vspace{$spacing_after_section_title$}%
+  $endif$%
+}
 \makeatother
-$endif$
 
 % Compact typography: reduce sizes used in header, sections and entries, adjust font sizes
 \makeatletter
@@ -212,7 +218,7 @@ $endif$
 }{%
   \end{itemize}
   \end{justify}
-  \vspace{0.0mm}
+  \vspace{-5pt}
 }
 
 % Modify the environment cvskill to allow more space after the section title
