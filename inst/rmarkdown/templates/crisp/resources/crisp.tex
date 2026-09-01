@@ -184,14 +184,6 @@ $endif$
 
 % define new enviroment for cventries so that we can adjust spacing, depending on whether description is present
 \newcommand{\acvEntriesBottomSkip}{1mm}
-% Define an environment for cventry
-\RenewDocumentEnvironment{cventries}{o}{
-    \vspace{\acvSectionContentTopSkip}
-    \begin{center}
-}{
-    \end{center}
-    \ifstrequal{#1}{bottomspace}{\vspace{\acvEntriesBottomSkip}}{}
-}
 
 % Change the definition of \cventry to reduce spacing among sub-sections
 % Usage: \cventry{<position>}{<title>}{<location>}{<date>}{<description>}
@@ -208,6 +200,19 @@ $endif$
   \end{tabular*}%
   % adjust this value to change spacing after each entry
   \ifempty{#5}{\vspace{0.1mm}}{\vspace{-1.8mm}}
+}
+
+% Modify an environment for cvitems(for cventry) to have less spacing at the end
+\renewenvironment{cvitems}{%
+  \vspace{-4.0mm}
+  \begin{justify}
+  \begin{itemize}[leftmargin=2ex, nosep, noitemsep]
+    \setlength{\parskip}{0pt}
+    \renewcommand{\labelitemi}{\bullet}
+}{%
+  \end{itemize}
+  \end{justify}
+  \vspace{0.0mm}
 }
 
 % Modify the environment cvskill to allow more space after the section title

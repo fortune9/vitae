@@ -770,6 +770,24 @@
 	\skilltypestyle{#1} & \skillsetstyle{#2} \\
 }
 
+% Define an environment for cvtext
+\newenvironment{cvtext}{%
+  \vspace{\acvSectionContentTopSkip}
+  \vspace{1.0mm}
+  \begin{center}
+    \setlength\tabcolsep{1ex}
+    \setlength{\extrarowheight}{0pt}
+    \begin{tabular*}{\textwidth}{@{} L{\textwidth} @{}}
+}{%
+    \end{tabular*}
+  \end{center}
+}
+% Define a display for plain text
+% Usage: \cvplain{<text>}
+\newcommand*{\cvplain}[1]{%
+  \descriptionstyle{#1} \\
+}
+
 % Define an environment for cvitems(for cventry)
 \newenvironment{cvitems}{%
   \vspace{-4.0mm}

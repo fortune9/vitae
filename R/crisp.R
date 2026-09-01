@@ -34,7 +34,13 @@ crisp <- function(..., latex_engine = "xelatex", page_total = FALSE,
               template = template, latex_engine = latex_engine)
 }
 
-# these are the functions that generate the LaTeX code for different entry formats.
+# these are the functions that generate the LaTeX code for different
+# entry formats. They use the defined Latex commands and enviroments
+# in the crisp.cls file to generate the corresponding LaTeX code for
+# each entry format. And these functions are called by the
+# knit_print.* functions to generate the Latex code, for example
+# knit_print.vitae_brief() calls the brief() function to generate the
+# LaTeX code for the brief entry format.
 # if I want to define a new entry format, I need to create a new function here and
 # then use set_entry_formats() to register it for use with the current template.
 # For that to work, I also need to define a function to construct corresponding R
@@ -46,6 +52,10 @@ crisp <- function(..., latex_engine = "xelatex", page_total = FALSE,
 # the class names accordingly, e.g., "vitae_compact" and "vitae_fancy", and then
 # define knit_print.vitae_compact() and knit_print.vitae_fancy() functions to call the corresponding
 # entry format functions defined here.
+# you also need to update the function new_entry_formats() in
+# 00_entries.R to include the new entry format functions.
+# you also need to define the new latex commands and enviroments in
+# the crisp.cls file to match the functions here.
 crisp_entries <- new_entry_formats(
   brief = function(what, when, with){
     paste(
@@ -66,6 +76,19 @@ crisp_entries <- new_entry_formats(
         # cvhonor takes 4 arguments: \cvhonor{<position>}{<title>}{<location>}{<date>}
         glue_alt("\t\\cvhonor{<<with>>}{<<what>>}{<<where>>}{<<when>>}"),
         "\\end{cvhonors}"
+      ),
+      collapse = "\n"
+    )
+  },
+  # add a new entry with plain text, taking only one argument, the
+  # text to be displayed. This is useful for adding a short
+  # description or summary of a section.
+  plain = function(what){
+    paste(
+      c(
+        "\\begin{cvtext}",
+        glue_alt("\t\\cvplain{<<what>>}"),
+        "\\end{cvtext}"
       ),
       collapse = "\n"
     )
