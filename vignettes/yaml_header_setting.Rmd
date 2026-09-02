@@ -1,0 +1,119 @@
+---
+title: "YAML Header Configuration"
+author: "Zhenguo Zhang"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{YAML Header Configuration}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+# Introduction
+
+R Markdown documents in `vitae` use the YAML header to specify document metadata, personal contact information, global document layout settings, and output format options.
+
+Below is a complete example of a YAML header featuring generic `vitae` settings as well as template-specific configuration options.
+
+```yaml
+---
+title: "Zhenguo Zhang's Resume"
+surname: "Zhenguo Zhang"
+address: "Irvine, CA"
+email: zhangz.sci@gmail.com
+phone: +1 814-###-###
+www: 'fortune9.netlify.app/home/'
+github: fortune9
+linkedin: zhenguo-zhang-418b0220
+date: "Last updated: `r format(Sys.Date(), '%B %d, %Y')`"
+papersize: "letterpaper"
+fontsize: 10pt
+linestretch: 1
+geometry: left=0.6in, right=0.6in, top=0.5in, bottom=0.5in
+output:
+  vitae::crisp:
+    show_footer: false
+    page_total: false
+    keep_tex: true
+    keep_md: true
+# Crisp-specific options
+headcolor: "000000"
+spacing_before_section_title: "5pt"
+spacing_after_section_title: "-3pt"
+classoption: "times"
+---
+```
+
+---
+
+# General YAML Options
+
+These parameters apply across `vitae` templates and general R Markdown / Pandoc PDF documents.
+
+### Personal Metadata & Contact Info
+
+- **`title`**: The main title of the document (e.g., `"Zhenguo Zhang's Resume"`).
+- **`surname`**: The name displayed in the header. Note: when specified, only the surname (or the last word if a full name is provided here) is formatted with a bold font in the header.
+- **`address`**: Location or street address to display in the contact header (e.g., `"Irvine, CA"`).
+- **`email`**: Email address linked in the header (e.g., `zhangz.sci@gmail.com`).
+- **`phone`**: Phone number formatted as a string (e.g., `+1 814-###-###`).
+- **`www`**: Personal website or homepage URL (e.g., `'fortune9.netlify.app/home/'`).
+- **`github`**: GitHub username (e.g., `fortune9`).
+- **`linkedin`**: LinkedIn profile username or slug (e.g., `zhenguo-zhang-418b0220`).
+- **`date`**: Date line shown in the header. Supports inline R expressions such as `"Last updated: 'r format(Sys.Date(), '%B %d, %Y')'"`.
+
+### Document Layout & Formatting Options
+
+- **`papersize`**: Paper dimension specification. Common values are `"letterpaper"` or `"a4paper"`.
+- **`fontsize`**: Base font size for the document body (e.g., `10pt`, `11pt`, `12pt`).
+- **`linestretch`**: Line height multiplier for text spacing (e.g., `1` for single spacing).
+- **`geometry`**: Page margins passed to the LaTeX `geometry` package (e.g., `left=0.6in, right=0.6in, top=0.5in, bottom=0.5in`).
+
+### Output Format Options (`vitae::crisp`)
+
+- **`show_footer`**: Boolean (`true` or `false`). Controls whether the footer bar (containing your name and page numbers) is rendered.
+- **`page_total`**: Boolean (`true` or `false`). If `true`, shows total page numbers in the footer (e.g., "Page 1 of 2").
+- **`keep_tex`**: Boolean (`true` or `false`). Retains the intermediate LaTeX `.tex` file after rendering the PDF.
+- **`keep_md`**: Boolean (`true` or `false`). Retains the intermediate Markdown `.md` file after knitr processing.
+
+---
+
+# Crisp Template Specific Options
+
+The `vitae::crisp` template introduces several fine-grained typography and layout options to control header colors, section title margins, and font choices:
+
+- **`headcolor`**: 6-digit hex color code (without `#`) used for the section title accent color (first 3 characters of each section header). For example, `"000000"` sets it to solid black.
+- **`spacing_before_section_title`**: A LaTeX length specification (e.g., `"5pt"`, `"1mm"`) determining the vertical space inserted before each section title.
+- **`spacing_after_section_title`**: A LaTeX length specification (e.g., `"-3pt"`, `"-1mm"`, `"0.5mm"`) controlling vertical space between a section title and its entries. Negative values tighten the gap.
+- **`classoption`**: Specifies font family and template options for `crisp.cls`. Supported font choices include:
+  - `"times"`: Uses Times New Roman font family.
+  - `"roboto"`: Uses Roboto font family.
+
+---
+
+# Overriding LaTeX Commands and Macros
+
+You can customize or override underlying LaTeX commands and macros directly from your YAML header using the `header-includes` parameter. This allows you to redefine template macros without modifying the `.cls` or `.tex` source files.
+
+For example, to override the default footer layout defined by `\makecvfooter`, add the following snippet to your YAML header:
+
+```yaml
+header-includes:
+  - |
+    \renewcommand*{\makecvfooter}[3]{%
+      \fancyfoot{}%
+      \fancyfoot[L]{\footerstyle{\href{https://github.com/fortune9/vitae/tree/feat/crisp-template}{Generated by Crisp}}}%
+      \fancyfoot[C]{\footerstyle{Zhenguo Zhang}}%
+      \fancyfoot[R]{\footerstyle{\thepage}}%
+    }
+```
+
+This redefines `\makecvfooter` to display a custom link on the left, your name in the center, and the current page number on the right.
+
