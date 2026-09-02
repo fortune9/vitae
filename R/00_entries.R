@@ -6,9 +6,12 @@ set_entry_formats <- function(entry_format) {
 }
 
 new_entry_formats <- function(brief, detailed, honor = NULL, skill = NULL, plain = NULL) {
-  formats <- list(brief = brief, detailed = detailed)
-  if (!is.null(honor)) formats$honor <- honor
-  if (!is.null(skill)) formats$skill <- skill
-  if (!is.null(plain)) formats$plain <- plain
+  formats <- list(
+                  brief = brief,
+                  detailed = detailed,
+                  honor = honor,
+                  skill = skill,
+                  plain = plain
+  )
   formats
 }
