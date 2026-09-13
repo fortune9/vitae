@@ -788,6 +788,19 @@
   \descriptionstyle{#1} \\
 }
 
+% Define a two-column table environment
+\newenvironment{twocoltable}{%
+  \vspace{\acvSectionContentTopSkip}
+  \vspace{0.0mm}
+  \begin{center}
+    \setlength\tabcolsep{1ex}
+    \setlength{\extrarowheight}{0pt}
+      \begin{tabular*}{\textwidth}{@{} L{0.5\textwidth} L{0.5\textwidth} @{}}
+}{%
+    \end{tabular*}
+  \end{center}
+}
+
 % Define an environment for cvitems(for cventry)
 \newenvironment{cvitems}{%
   \vspace{-4.0mm}

@@ -5,13 +5,14 @@ set_entry_formats <- function(entry_format) {
   entry_format_functions$format <- entry_format
 }
 
-new_entry_formats <- function(brief, detailed, honor = NULL, skill = NULL, plain = NULL) {
+new_entry_formats <- function(brief, detailed, honor = NULL, skill = NULL, plain = NULL, twocoltable = NULL) {
   formats <- list(
                   brief = brief,
                   detailed = detailed,
                   honor = honor,
                   skill = skill,
-                  plain = plain
+                  plain = plain,
+                  twocoltable = twocoltable
   )
   formats
 }

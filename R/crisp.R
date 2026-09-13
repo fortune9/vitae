@@ -93,6 +93,21 @@ crisp_entries <- new_entry_formats(
       collapse = "\n"
     )
   },
+  # add a new entry to show 2-column table
+  twocoltable = function(what){
+    # construct table text by splitting input vector into two columns
+    text_array<-glue_alt("\t\\descriptionstyle{<<what>>}")
+    table_text<-format_latex_pairs(text_array)    
+    paste(
+          c(
+            "\\begin{twocoltable}",
+            table_text,
+            "\\end{twocoltable}"
+            ),
+          collapse = "\n"
+    )
+  },
+
   skill = function(what, with){
     paste(
       c(
@@ -125,3 +140,26 @@ crisp_entries <- new_entry_formats(
     ), collapse = "\n")
   }
 )
+
+# define a helper function to create 2-col table
+format_latex_pairs <- function(strings) {
+  # Handle empty vector case safely
+  if (length(strings) == 0) return(character(0))
+  
+  # Create a sequence jumping by 2 (1, 3, 5, ...)
+  indices <- seq(1, length(strings), by = 2)
+  
+  # Map over the odd indices to build the rows
+  rows <- sapply(indices, function(i) {
+    if (i + 1 <= length(strings)) {
+      # Standard case: pair current string with the next one
+      paste0(strings[i], " & ", strings[i+1], " \\\\")
+    } else {
+      # Odd case: last string stands alone with a blank second column
+      paste0(strings[i], " &  \\\\")
+    }
+  })
+  
+  return(rows)
+}
+
