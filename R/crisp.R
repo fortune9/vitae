@@ -108,6 +108,21 @@ crisp_entries <- new_entry_formats(
     )
   },
 
+  # add a new entry to show 1-column table
+  onecoltable = function(what){
+    # construct table text by splitting input vector into two columns
+    text_array<-glue_alt("\t\\descriptionstyle{<<what>>}")
+    table_text<-paste(text_array, collapse = "\\\\")
+    paste(
+          c(
+            "\\begin{onecoltable}",
+            table_text,
+            "\\end{onecoltable}"
+            ),
+          collapse = "\n"
+    )
+  },
+
   skill = function(what, with){
     paste(
       c(

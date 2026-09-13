@@ -788,6 +788,19 @@
   \descriptionstyle{#1} \\
 }
 
+% Define a one-column table environment
+\newenvironment{onecoltable}{%
+  \vspace{\acvSectionContentTopSkip}
+  \vspace{0.0mm}
+  \begin{center}
+    \setlength\tabcolsep{1ex}
+    \setlength{\extrarowheight}{0pt}
+      \begin{tabular*}{\textwidth}{@{} L{\textwidth} @{}}
+}{%
+    \end{tabular*}
+  \end{center}
+}
+
 % Define a two-column table environment
 \newenvironment{twocoltable}{%
   \vspace{\acvSectionContentTopSkip}
