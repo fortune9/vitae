@@ -90,6 +90,33 @@ tribble(
   )
 ```
 
+To have multiple entries within the same institution, one can omit the
+values for parameters `with` and `where` for the earlier entries, and
+below is an example:
+
+```{r eval=FALSE}
+tribble(
+  ~title, ~unit, ~loc, ~dates, ~details,
+  "Ph.D.", "University of Statistics", "California", "2020-2024",
+  c("Thesis: Statistical Analysis of Data",
+    "Published 3 papers in top journals",
+    "Received Excellence Award"),
+  "M.Sc.", "College of Data", "New York", "2018-2020",
+  c("Focus on Machine Learning",
+    "GPA: 4.0/4.0"),
+  "B.S.", "", "", "2018-2020",
+  c("Focus on Exploring", "GPA: 3.8/4.0")
+) %>%
+  detailed_entries(
+    what = title,
+    when = dates,
+    with = unit,
+    where = loc,
+    why = details
+  )
+```
+
+
 #### Brief Entries
 
 Use `brief_entries()` for shorter items like publications or certifications:
